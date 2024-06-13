@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .product { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+        .product h2 { margin: 0; }
+        .product img { max-width: 100%; max-height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Price Tracker</h1>
+    <form id="search-form">
+        <input type="text" id="search-input" placeholder="Search for an item" required>
+        <button type="submit">Search</button>
+    </form>
+
+    <h2>Monitor Product</h2>
+    <form id="monitor-form">
+        <label for="monitor-search">Product to Monitor:</label>
+        <input type="text" id="monitor-search" placeholder="Enter product name">
+        <label for="threshold-price">Price Threshold:</label>
+        <input type="number" id="threshold-price" placeholder="Enter threshold price">
+        <button type="submit">Start Monitoring</button>
+    </form>
+
+    <div id="product-list"></div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const searchTerm = document.getElementById('search-input').value;
+            fetchProducts(searchTerm);
+        });
+
+        document.getElementById('monitor-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const monitorSearch = document.getElementById('monitor-search').value;
+            const thresholdPrice = document.getElementById('threshold-price').value;
+            startMonitoring(monitorSearch, thresholdPrice);
+        });
+
+        async function fetchProducts(searchTerm = 'cpu') {
+            const response = await fetch(`/api/products?search=${encodeURIComponent(searchTerm)}`);
+            const products = await response.json();
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+
+            products.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <h2>${product.name}</h2>
+                    <img src="${product.image}" alt="${product.name}">
+                    <p>Price: ${product.price}</p>
+                    <p>Rating: ${product.rating}</p>
+                    <a href="${product.link}" target="_blank">View Product</a>
+                `;
+                productList.appendChild(productDiv);
+            });
+        }
+
+        async function startMonitoring(searchTerm, thresholdPrice) {
+            const response = await fetch('/api/monitor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    search: searchTerm,
+                    threshold: thresholdPrice
+                })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        }
+
+        fetchProducts();
+    </script>
+</body>
+</html>
